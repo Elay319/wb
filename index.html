@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Start Page</title>
+    <link rel="icon" href="https://www.google.com/favicon.ico">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        .container {
+            margin-top: 120px;
+        }
+
+input {
+    width: 400px;
+    padding: 15px;
+    border-radius: 30px;
+    border: 2px solid #555;
+    outline: none;
+    font-size: 16px;
+    background: transparent;
+    color: inherit;
+    transition: 0.2s;
+}
+
+/* Focus glow */
+input:focus {
+    border-color: #4CAF50;
+    box-shadow: 0 0 6px #4CAF50;
+}
+
+/* Theme-specific fixes */
+body.light input {
+    border: 2px solid black;
+}
+
+body.dark input {
+    border: 2px solid white;
+}
+
+body.blue input {
+    border: 2px solid #4CAF50;
+}
+
+button {
+    padding: 10px 20px;
+    border-radius: 20px;
+    border: 2px solid #555; /* 👈 outline */
+    cursor: pointer;
+    margin: 5px;
+    background: transparent;
+    color: inherit;
+}
+        .shortcuts, .history, .themes {
+            margin-top: 20px;
+        }
+
+        .suggestions {
+            background: white;
+            color: black;
+            width: 400px;
+            margin: auto;
+            border-radius: 10px;
+            text-align: left;
+        }
+
+        .suggestions div {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .suggestions div:hover {
+            background: #ddd;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>My Start Page</h1>
+
+    <input id="searchBox" placeholder="Search or type URL..."
+    oninput="showSuggestions()"
+    onkeydown="if(event.key==='Enter') go()">
+
+    <div id="suggestions" class="suggestions"></div>
+
+    <br><br>
+    <button onclick="go()">Search</button>
+    <button onclick="addShortcut()">Add Shortcut</button>
+</div>
+
+<div class="shortcuts" id="shortcuts"></div>
+<div class="history" id="history"></div>
+
+<div class="themes">
+    <button onclick="setTheme('dark')">Dark</button>
+    <button onclick="setTheme('light')">Light</button>
+    <button onclick="setTheme('blue')">Blue</button>
+</div>
+
+<script>
+let historyList = JSON.parse(localStorage.getItem("history")) || [];
+let shortcuts = JSON.parse(localStorage.getItem("shortcuts")) || [];
+
+function formatURL(input) {
+    input = input.trim();
+
+    if (input.startsWith("http")) return input;
+    if (input.includes(".")) return "https://" + input;
+
+    return "https://www.google.com/search?q=" + encodeURIComponent(input);
+}
+
+function go() {
+    let input = document.getElementById("searchBox").value;
+    let url = formatURL(input);
+
+    window.open(url, "_blank");
+
+    historyList.unshift(input);
+    historyList = historyList.slice(0, 10);
+    localStorage.setItem("history", JSON.stringify(historyList));
+
+    renderHistory();
+}
+
+function renderHistory() {
+    let div = document.getElementById("history");
+    div.innerHTML = "<h3>History</h3>";
+
+    historyList.forEach(item => {
+        div.innerHTML += `<button onclick="quick('${item}')">${item}</button>`;
+    });
+}
+
+function addShortcut() {
+    let input = document.getElementById("searchBox").value;
+    shortcuts.push(input);
+    localStorage.setItem("shortcuts", JSON.stringify(shortcuts));
+    renderShortcuts();
+}
+
+function renderShortcuts() {
+    let div = document.getElementById("shortcuts");
+    div.innerHTML = "<h3>Shortcuts</h3>";
+
+    shortcuts.forEach(item => {
+        div.innerHTML += `<button onclick="quick('${item}')">${item}</button>`;
+    });
+}
+
+function quick(input) {
+    window.open(formatURL(input), "_blank");
+}
+
+function setTheme(theme) {
+    if (theme === "dark") {
+        document.body.style.background = "#121212";
+        document.body.style.color = "white";
+    }
+    if (theme === "light") {
+        document.body.style.background = "white";
+        document.body.style.color = "black";
+    }
+    if (theme === "blue") {
+        document.body.style.background = "#0a192f";
+        document.body.style.color = "white";
+    }
+
+    localStorage.setItem("theme", theme);
+}
+
+function loadTheme() {
+    let theme = localStorage.getItem("theme") || "dark";
+    setTheme(theme);
+}
+
+function showSuggestions() {
+    let input = document.getElementById("searchBox").value.toLowerCase();
+    let box = document.getElementById("suggestions");
+
+    box.innerHTML = "";
+
+    if (!input) return;
+
+    let matches = historyList.filter(item => item.toLowerCase().includes(input));
+
+    matches.forEach(match => {
+        let div = document.createElement("div");
+        div.textContent = match;
+        div.onclick = () => {
+            document.getElementById("searchBox").value = match;
+            box.innerHTML = "";
+        };
+        box.appendChild(div);
+    });
+}
+
+loadTheme();
+renderShortcuts();
+renderHistory();
+</script>
+
+</body>
+</html>
